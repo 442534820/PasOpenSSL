@@ -12,6 +12,7 @@ type
     Alog: string;
     Mode: string;
   end;
+  PPBIGNUM = ^PBIGNUM;
 
 type {$Z4} Tpoint_conversion_form = (POINT_CONVERSION_COMPRESSED=2, POINT_CONVERSION_UNCOMPRESSED=4, POINT_CONVERSION_HYBRID=6);
 
@@ -183,6 +184,15 @@ function EC_KEY_precompute_mult(key: PEC_KEY; ctx: PBN_CTX): Integer; external l
 function EC_KEY_get_flags(const key: PEC_KEY): Integer; external libcrypto;
 procedure EC_KEY_set_flags(key: PEC_KEY; flags: Integer); external libcrypto;
 procedure EC_KEY_clear_flags(key: PEC_KEY; flags: Integer); external libcrypto;
+//ECDSA functions
+procedure ECDSA_SIG_free(sig: PECDSA_SIG); external libcrypto;
+procedure ECDSA_SIG_get0(const sig: PECDSA_SIG; const pr: PPBIGNUM; const ps: PPBIGNUM); external libcrypto;
+function ECDSA_SIG_get0_r(const sig: PECDSA_SIG): PBIGNUM; external libcrypto;   //const return value
+function ECDSA_SIG_get0_s(const sig: PECDSA_SIG): PBIGNUM; external libcrypto;   //const return value
+function ECDSA_SIG_set0(sig: PECDSA_SIG; r: PBIGNUM; s: PBIGNUM): Integer; external libcrypto;
+//der functions
+function i2d_ECDSA_SIG(const sig: PECDSA_SIG; pp: PPByte): Integer; external libcrypto;
+function d2i_ECDSA_SIG(sig: PPECDSA_SIG; const pp: PPByte; len: LONG): PECDSA_SIG; external libcrypto;
 
 
 //macro functions
