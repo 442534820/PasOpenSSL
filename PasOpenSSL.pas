@@ -149,12 +149,14 @@ function EVP_EncryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const 
 function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
 //EC Group functions
 function EC_GROUP_new_by_curve_name(nid: Integer): PEC_GROUP; external libcrypto;
+procedure EC_GROUP_free(group: PEC_GROUP); external libcrypto;
 //EC Point functions
 function EC_POINT_new(const group: PEC_GROUP): PEC_POINT; external libcrypto;
 procedure EC_POINT_free(point: PEC_POINT); external libcrypto;
 procedure EC_POINT_clear_free(point: PEC_POINT); external libcrypto;
 function EC_POINT_copy(dst: PEC_POINT; const src: PEC_POINT): Integer; external libcrypto;
 function EC_POINT_dup(const src: PEC_POINT; const group: PEC_GROUP): PEC_POINT; external libcrypto;
+function EC_POINT_mul(const group: PEC_GROUP; r: PEC_POINT; const g_scalar: PBIGNUM; const point: PEC_POINT; const p_scaler: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
 //EC Key functions
 function EC_KEY_new: PEC_KEY; external libcrypto;
 function EC_KEY_new_by_curve_name(nid: Integer): PEC_KEY; external libcrypto;
@@ -196,6 +198,12 @@ function d2i_ECDSA_SIG(sig: PPECDSA_SIG; const pp: PPByte; len: LONG): PECDSA_SI
 
 
 //macro functions
+function OPENSSL_malloc(num: SIZE_T):Pointer;
+function OPENSSL_zalloc(num: SIZE_T):Pointer;
+function OPENSSL_realloc(addr: Pointer; num: SIZE_T): Pointer;
+function OPENSSL_clear_realloc(addr: Pointer; old_num: SIZE_T; num: SIZE_T): Pointer;
+procedure OPENSSL_clear_free(addr: Pointer; num: SIZE_T);
+procedure OPENSSL_free(obj: Pointer);
 function EVP_PKEY_CTX_set1_id(ctx: PEVP_PKEY_CTX; id: Pointer; id_len: Integer): Integer;
 function EVP_PKEY_CTX_get1_id(ctx: PEVP_PKEY_CTX; id: Pointer): Integer;
 function EVP_PKEY_CTX_get1_id_len(ctx: PEVP_PKEY_CTX; id_len: Integer): Integer;
@@ -237,6 +245,36 @@ function set_public_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 function set_private_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 
 implementation
+
+function OPENSSL_malloc(num: SIZE_T):Pointer;
+begin
+  Result := CRYPTO_malloc(num, 'InPascal', 1);
+end;
+
+function OPENSSL_zalloc(num: SIZE_T):Pointer;
+begin
+  Result := CRYPTO_zalloc(num, 'InPascal', 1);
+end;
+
+function OPENSSL_realloc(addr: Pointer; num: SIZE_T): Pointer;
+begin
+  Result := CRYPTO_realloc(addr, num, 'InPascal', 1);
+end;
+
+function OPENSSL_clear_realloc(addr: Pointer; old_num: SIZE_T; num: SIZE_T): Pointer;
+begin
+  Result := CRYPTO_clear_realloc(addr, old_num, num, 'InPascal', 1);
+end;
+
+procedure OPENSSL_clear_free(addr: Pointer; num: SIZE_T);
+begin
+  CRYPTO_clear_free(addr, num, 'InPascal', 1);
+end;
+
+procedure OPENSSL_free(obj: Pointer);
+begin
+  CRYPTO_free(obj, 'InPascal', 1);
+end;  
 
 function EVP_PKEY_CTX_set1_id(ctx: PEVP_PKEY_CTX; id: Pointer; id_len: Integer): Integer;
 begin
