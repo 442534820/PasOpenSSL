@@ -148,8 +148,37 @@ function EVP_DigestInit(ctx: PEVP_MD_CTX; const _type: PEVP_MD): Integer; extern
 function EVP_EncryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
 function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
 //EC Group functions
-function EC_GROUP_new_by_curve_name(nid: Integer): PEC_GROUP; external libcrypto;
+function EC_GROUP_new(const meth: PEC_METHOD): PEC_GROUP; external libcrypto;
+procedure EC_pre_comp_free(group: PEC_GROUP); external libcrypto;
 procedure EC_GROUP_free(group: PEC_GROUP); external libcrypto;
+procedure EC_GROUP_clear_free(group: PEC_GROUP); external libcrypto;
+function EC_GROUP_copy(dest: PEC_GROUP; const src: PEC_GROUP): Integer; external libcrypto;
+function EC_GROUP_dup(const a: PEC_GROUP): PEC_GROUP; external libcrypto;
+function EC_GROUP_method_of(const group: PEC_GROUP): PEC_METHOD; external libcrypto;   //const return value
+function EC_METHOD_get_field_type(const meth: PEC_METHOD): Integer; external libcrypto;
+function EC_GROUP_set_generator(group: PEC_GROUP; const generator: PEC_POINT; const order: PBIGNUM; const cofactor: PBIGNUM): Integer; external libcrypto;
+function EC_GROUP_get0_generator(const group: PEC_GROUP): PEC_POINT; external libcrypto;   //const return value
+function EC_GROUP_get_mont_data(const group: PEC_GROUP): PBN_MONT_CTX; external libcrypto;
+function EC_GROUP_get_order(const group: PEC_GROUP; order: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_get0_order(const group: PEC_GROUP): PBIGNUM; external libcrypto;   //const return value
+function EC_GROUP_order_bits(const group: PEC_GROUP): Integer; external libcrypto;
+function EC_GROUP_get_cofactor(const group: PEC_GROUP; cofactor: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_get0_cofactor(const group: PEC_GROUP): PBIGNUM; external libcrypto;    //const return value
+procedure EC_GROUP_set_curve_name(group: PEC_GROUP; nid: Integer); external libcrypto;
+function EC_GROUP_get_curve_name(const group: PEC_GROUP): Integer; external libcrypto;
+procedure EC_GROUP_set_asn1_flag(group: PEC_GROUP; flag: Integer); external libcrypto;
+function EC_GROUP_get_asn1_flag(const group: PEC_GROUP): Integer; external libcrypto;
+procedure EC_GROUP_set_point_conversion_form(group: PEC_GROUP; form: Tpoint_conversion_form); external libcrypto;
+function EC_GROUP_get_point_conversion_form(const group: PEC_GROUP): Tpoint_conversion_form; external libcrypto;
+function EC_GROUP_new_by_curve_name(nid: Integer): PEC_GROUP; external libcrypto;
+function EC_GROUP_set_seed(group: PEC_GROUP; const p: PByte; len: SIZE_T): SIZE_T; external libcrypto;
+function EC_GROUP_get0_seed(const group: PEC_GROUP): PByte; external libcrypto;
+function EC_GROUP_get_seed_len(const group: PEC_GROUP): SIZE_T; external libcrypto;
+function EC_GROUP_set_curve(group: PEC_GROUP; const p: PBIGNUM; const a: PBIGNUM; const b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_get_curve(const group: PEC_GROUP; p: PBIGNUM; a: PBIGNUM; b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_get_degree(const group: PEC_GROUP): Integer; external libcrypto;
+function EC_GROUP_check_discriminant(const group: PEC_GROUP; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_cmp(const a: PEC_GROUP; const b: PEC_GROUP; ctx: PBN_CTX): Integer; external libcrypto;
 //EC Point functions
 function EC_POINT_new(const group: PEC_GROUP): PEC_POINT; external libcrypto;
 procedure EC_POINT_free(point: PEC_POINT); external libcrypto;
