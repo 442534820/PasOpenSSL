@@ -216,6 +216,7 @@ function EC_KEY_get_flags(const key: PEC_KEY): Integer; external libcrypto;
 procedure EC_KEY_set_flags(key: PEC_KEY; flags: Integer); external libcrypto;
 procedure EC_KEY_clear_flags(key: PEC_KEY; flags: Integer); external libcrypto;
 //ECDSA functions
+function ECDSA_SIG_new: PECDSA_SIG; external libcrypto;
 procedure ECDSA_SIG_free(sig: PECDSA_SIG); external libcrypto;
 procedure ECDSA_SIG_get0(const sig: PECDSA_SIG; const pr: PPBIGNUM; const ps: PPBIGNUM); external libcrypto;
 function ECDSA_SIG_get0_r(const sig: PECDSA_SIG): PBIGNUM; external libcrypto;   //const return value
@@ -272,6 +273,7 @@ function get_cipher_all_size(alog_name: string; var key_size: Integer; var iv_si
 
 function set_public_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 function set_private_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
+function set_key_pare_by_hex(key: PEC_KEY; pri_key_hex_str: string; pub_key_hex_str: string = ''): Boolean;
 
 implementation
 
@@ -643,6 +645,34 @@ begin
     Exit;
   ret := EC_KEY_set_group(key, sm2_curve);
   ret := EC_KEY_set_private_key(key, pri_key);
+  if ret <= 0 then
+    Exit;
+  Result := True;
+end;
+
+function set_key_pare_by_hex(key: PEC_KEY; pri_key_hex_str: string; pub_key_hex_str: string = ''): Boolean;
+var
+  ret : Integer;
+  pri_key: PBIGNUM;
+  pub_key: PEC_POINT;
+  sm2_curve : PEC_GROUP;
+begin
+  Result := False;
+  sm2_curve := EC_GROUP_new_by_curve_name(NID_sm2);
+  pri_key := BN_new;
+  pub_key := EC_POINT_new(sm2_curve);
+  ret := BN_hex2bn(pri_key, PAnsiChar(AnsiString(pri_key_hex_str)));
+  if pub_key_hex_str = '' then
+  begin
+    EC_POINT_mul(sm2_curve, pub_key, pri_key, nil, nil, nil);
+  end
+  else
+  begin
+    EC_POINT_hex2point(sm2_curve, PAnsiChar(AnsiString(pub_key_hex_str)), pub_key, nil);
+  end;
+  ret := EC_KEY_set_group(key, sm2_curve);
+  ret := EC_KEY_set_private_key(key, pri_key);
+  ret := EC_KEY_set_public_key(key, pub_key);
   if ret <= 0 then
     Exit;
   Result := True;
