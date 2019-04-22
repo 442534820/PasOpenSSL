@@ -98,6 +98,7 @@ function BN_bn2dec(const a: PBIGNUM): PAnsiChar; external libcrypto;
 function BN_hex2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
 function BN_dec2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
 function BN_asc2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
+function BN_bin2bn(const s: PByte; len: Integer; ret: PBIGNUM): PBIGNUM; external libcrypto;
 //EC Point functions
 function EC_POINT_point2oct(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; buf: PByte; len: SIZE_T; ctx: PBN_CTX): SIZE_T; external libcrypto;
 function EC_POINT_oct2point(const group: PEC_GROUP; point: PEC_POINT; const buf: PByte; len: SIZE_T; ctx: PBN_CTX): Integer; external libcrypto;
@@ -252,7 +253,8 @@ function EVP_DigestVerifyUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SI
 procedure FreePByte(pb: PByte);
 function GetPByteFromHexStr(in_str: TStrings; var out_len: Integer): PByte; overload;
 function GetPByteFromHexStr(in_str: string; var out_len: Integer): PByte; overload;
-function GetPByteFromASCIIStrs(in_str: TStrings; var out_len: Integer): PByte;
+function GetPByteFromASCIIStrs(in_str: TStrings; var out_len: Integer): PByte; overload;
+function GetPByteFromASCIIStrs(in_str: string; var out_len: Integer): PByte; overload;
 function PByteToString(in_pbyte: PByte; in_len: Integer; split_str: string): string;
 function PAnsiCharToString(in_pansichar: PAnsiChar; in_len: Integer; split_str: string): string;
 
@@ -265,6 +267,12 @@ procedure do_md(alog_name: string;
 procedure do_cipher(alog_name: string; do_enc: Integer; padding: Integer;
     input: PByte; output: PByte; key: PByte; iv: PByte;
     input_len: Integer; var output_len: Integer; key_len: Integer; iv_len: Integer);
+function do_sm2sign(group: PEC_GROUP; evp_md: PEVP_MD;
+    userid: PByte; prikey: PByte; msg: PByte; k: PByte; var sig: string;
+    userid_len: Integer; msg_len: Integer; var sig_len: Integer): Boolean;
+function do_sm2verify(group: PEC_GROUP; evp_md: PEVP_MD;
+    userid: PByte; pubkey: string; msg: PByte; k: PByte; sig: string;
+    userid_len: Integer; msg_len: Integer; sig_len: Integer): Boolean;    
 function check_cipher(alog_name: string): Boolean;
 function get_cipher_key_size(alog_name: string): Integer;
 function get_cipher_iv_size(alog_name: string): Integer;
@@ -457,7 +465,7 @@ begin
   out_len := l div 2;
 end;
 
-function GetPByteFromASCIIStrs(in_str: TStrings; var out_len: Integer): PByte;
+function GetPByteFromASCIIStrs(in_str: TStrings; var out_len: Integer): PByte; overload;
 var
   i,j,l: Integer;
   ptr: PByte;
@@ -481,6 +489,26 @@ begin
   end;
   out_len := l;
 end;
+
+function GetPByteFromASCIIStrs(in_str: string; var out_len: Integer): PByte; overload;
+var
+  i,l: Integer;
+  ptr: PByte;
+begin
+  out_len := 0;
+  l := Length(in_str);
+  Result := nil;
+  if l = 0 then
+    Exit;
+  Result := GetMemory(l);
+  ptr := Result;
+  for i := 1 to l do
+  begin
+    ptr^ := Byte(in_str[i]);
+    Inc(ptr);
+  end;
+  out_len := l;
+end;  
 
 function PByteToString(in_pbyte: PByte; in_len: Integer; split_str: string): string;
 begin
@@ -550,13 +578,104 @@ begin
   EVP_CIPHER_CTX_free(cipher_ctx);
 end;
 
-procedure do_sm2sign(group: PEC_GROUP;
-  userid: PByte; prikey: PByte; msg: PByte; k: PByte; sig: PByte;
-  userid_len: Integer; msg_len: Integer);
+function do_sm2verify(group: PEC_GROUP; evp_md: PEVP_MD;
+    userid: PByte; pubkey: string; msg: PByte; k: PByte; sig: string;
+    userid_len: Integer; msg_len: Integer; sig_len: Integer): Boolean;
 var
-  ok : Integer;
+  ret: Integer;
+  pkey: PEVP_PKEY;
+  mctx: PEVP_MD_CTX;
+  pctx: PEVP_PKEY_CTX;
+  key: PEC_KEY;
+  sig_der: array[0..127] of Byte;
+  sig_der_p: PByte;
+  ecdsa_sig: PECDSA_SIG;
+  sig_r, sig_s : PBIGNUM;
+  s_r, s_s : PAnsiChar;
+  pub_key: PEC_POINT;
 begin
+  Result := False;
+  if Length(sig) <> 128 then
+    Exit;
+  group := EC_GROUP_new_by_curve_name(NID_sm2);
+  pub_key := EC_POINT_new(group);
+  key := EC_KEY_new;
+  pkey := EVP_PKEY_new;
+  mctx := EVP_MD_CTX_new;
+  // key config
+  EC_POINT_hex2point(group, PAnsiChar(AnsiString(pubkey)), pub_key, nil);
+  if pub_key = nil then
+    Exit;
+  ret := EC_KEY_set_group(key, group);
+  ret := EC_KEY_set_public_key(key, pub_key);
+  s_r := PAnsiChar(AnsiString(Copy(sig, 1, 64)));
+  s_s := PAnsiChar(AnsiString(Copy(sig, 65, 64)));
+  sig_r := nil;
+  sig_s := nil;
+  ret := BN_hex2bn(sig_r, s_r);
+  ret := BN_hex2bn(sig_s, s_s);
+  // encode
+  ecdsa_sig := ECDSA_SIG_new;
+  ret := ECDSA_SIG_set0(ecdsa_sig, sig_r, sig_s);
+  sig_der_p := @sig_der;
+  sig_len := i2d_ECDSA_SIG(ecdsa_sig, @sig_der_p);
+  ret := EVP_PKEY_assign(pkey, EVP_PKEY_SM2, key);
+  ret := EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+  pctx := EVP_PKEY_CTX_new(pkey, nil);
+  ret := EVP_PKEY_CTX_set1_id(pctx, userid, userid_len);
+  EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
+  ret := EVP_DigestVerifyInit(mctx, nil, evp_md, nil, pkey);
+  ret := EVP_DigestVerifyUpdate(mctx, msg, msg_len);
+  ret := EVP_DigestVerifyFinal(mctx, @sig_der, sig_len);
+  if ret = 1 then
+    Result := True;
+end;
 
+function do_sm2sign(group: PEC_GROUP; evp_md: PEVP_MD;
+    userid: PByte; prikey: PByte; msg: PByte; k: PByte; var sig: string;
+    userid_len: Integer; msg_len: Integer; var sig_len: Integer): Boolean;
+var
+  ret: Integer;
+  pkey: PEVP_PKEY;
+  mctx: PEVP_MD_CTX;
+  pctx: PEVP_PKEY_CTX;
+  key: PEC_KEY;
+  sig_der: array[0..127] of Byte;
+  sig_der_p: PByte;
+  ecdsa_sig: PECDSA_SIG;
+  sig_r, sig_s, pri_key : PBIGNUM;
+  s_r, s_s : PAnsiChar;
+  pub_key: PEC_POINT;
+begin
+  Result := False;
+  pri_key := BN_new;
+  pub_key := EC_POINT_new(group);
+  key := EC_KEY_new;
+  pkey := EVP_PKEY_new;
+  mctx := EVP_MD_CTX_new;
+  BN_bin2bn(prikey, 32, pri_key);
+  EC_POINT_mul(group, pub_key, pri_key, nil, nil, nil);
+  ret := EC_KEY_set_group(key, group);
+  ret := EC_KEY_set_private_key(key, pri_key);
+  ret := EC_KEY_set_public_key(key, pub_key);
+  ret := EVP_PKEY_assign(pkey, EVP_PKEY_SM2, key);
+  ret := EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+  pctx := EVP_PKEY_CTX_new(pkey, nil);
+  EVP_PKEY_CTX_set1_id(pctx, userid, userid_len);
+  EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
+  ret := EVP_DigestSignInit(mctx, nil, evp_md, nil, pkey);
+  ret := EVP_DigestSignUpdate(mctx, msg, msg_len);
+  sig_len := 128;
+  sig_der_p := @sig_der;
+  ret := EVP_DigestSignFinal(mctx, @sig_der, @sig_len);
+  //decode
+  ecdsa_sig := d2i_ECDSA_SIG(nil, @sig_der_p, sig_len);
+  ECDSA_SIG_get0(ecdsa_sig, @sig_r, @sig_s);
+  s_r := BN_bn2hex(sig_r);
+  s_s := BN_bn2hex(sig_s);
+  sig := s_r;
+  sig := sig + s_s;
+  Result := True;  
 end;
 
 function check_cipher(alog_name: string): Boolean;
