@@ -238,7 +238,7 @@ procedure OPENSSL_free(obj: Pointer);
 function EVP_PKEY_CTX_set1_id(ctx: PEVP_PKEY_CTX; id: Pointer; id_len: Integer): Integer;
 function EVP_PKEY_CTX_get1_id(ctx: PEVP_PKEY_CTX; id: Pointer): Integer;
 function EVP_PKEY_CTX_get1_id_len(ctx: PEVP_PKEY_CTX; id_len: Integer): Integer;
-function EVP_SignIint_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer;
+function EVP_SignInit_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer;
 function EVP_SignInit(ctx: PEVP_MD_CTX; const _type: PEVP_MD): Integer;
 function EVP_SignUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SIZE_T): Integer;
 function EVP_VerifyInit_ex(ctx: PEVP_MD_CTX; const _type : PEVP_MD; impl: PENGINE): Integer;
@@ -330,7 +330,7 @@ begin
   Result := EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET1_ID_LEN, 0, Pointer(id_len));
 end;
 
-function EVP_SignIint_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer;
+function EVP_SignInit_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer;
 begin
   Result := EVP_DigestInit_ex(ctx, _type, impl);
 end;
@@ -597,7 +597,6 @@ begin
   Result := False;
   if Length(sig) <> 128 then
     Exit;
-  group := EC_GROUP_new_by_curve_name(NID_sm2);
   pub_key := EC_POINT_new(group);
   key := EC_KEY_new;
   pkey := EVP_PKEY_new;
