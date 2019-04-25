@@ -133,6 +133,10 @@ procedure EVP_PKEY_CTX_free(ctx: PEVP_PKEY_CTX); external libcrypto;
 function EVP_PKEY_CTX_ctrl(ctx: PEVP_PKEY_CTX; keytype: Integer; optype: Integer; cmd: Integer; p1: Integer; p2: Pointer): Integer; external libcrypto;
 function EVP_PKEY_set_type(pkey: PEVP_PKEY; _type: Integer): Integer; external libcrypto;
 function EVP_PKEY_set_alias_type(pkey: PEVP_PKEY; _type: Integer): Integer; external libcrypto;
+function EVP_PKEY_encrypt_init(ctx: PEVP_PKEY_CTX): Integer; external libcrypto;
+function EVP_PKEY_encrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; external libcrypto;
+function EVP_PKEY_decrypt_init(ctx: PEVP_PKEY_CTX): Integer; external libcrypto;
+function EVP_PKEY_decrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; external libcrypto;
 //EVP m_sigver.c
 function EVP_DigestSignInit(ctx: PEVP_MD_CTX; PCTX: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; external libcrypto;
 function EVP_DigestVerifyInit(ctx: PEVP_MD_CTX; pctx: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; external libcrypto;
@@ -258,6 +262,8 @@ function GetPByteFromASCIIStrs(in_str: string; var out_len: Integer): PByte; ove
 function PByteToString(in_pbyte: PByte; in_len: Integer; split_str: string): string;
 function PAnsiCharToString(in_pansichar: PAnsiChar; in_len: Integer; split_str: string): string;
 
+function simple_d2i_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
+function simple_i2d_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
 
 ///////////////////////////////////////
 
@@ -536,6 +542,245 @@ begin
     Dec(in_len);
   end;
   Result := Result + IntToHex(Ord(in_pansichar^), 2);
+end;
+
+
+function simple_der_get_len(ptr: PByte; pptr: PPByte): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  if ptr^ < $80 then
+    Result := ptr^                                                              // single len byte
+  else if ptr^ = $80 then
+  begin
+    Exit;
+                                                                                // auto len, stop with "0000", not support now
+  end
+  else
+  begin
+    i := ptr^ and $7F;                                                          // get len byte count
+    Result := 0;
+    while i <> 0 do
+    begin
+      Inc(ptr);
+      Result := Result * 256 + ptr^;
+      Dec(i);
+    end;
+  end;
+  if pptr <> nil then
+  begin
+    pptr^ := ptr + 1;                                                           // pptr return position of data
+  end;
+end;
+
+function simple_der_gen_len(len: Integer; ptr: PByte): Integer;
+begin
+  Result := -1;
+  if len <= 127 then
+  begin
+    if ptr <> nil then
+    begin
+      ptr^ := Byte(len and $7F);
+    end;
+    Result := 1;
+  end
+  else
+  begin
+    if len < 256 then
+    begin
+      if ptr <> nil then
+      begin
+        ptr^ := $81;
+        (ptr+1)^ := len shr 0 and $FF;
+      end;
+      Result := 2;
+    end
+    else if len < 65536 then
+    begin
+      if ptr <> nil then
+      begin
+        ptr^ := $82;
+        (ptr+1)^ := len shr 8 and $FF;
+        (ptr+2)^ := len shr 0 and $FF;
+      end;
+      Result := 3;
+    end
+    else if len < 16777216 then
+    begin
+      if ptr <> nil then
+      begin
+        ptr^ := $83;
+        (ptr+1)^ := len shr 16 and $FF;
+        (ptr+2)^ := len shr 8 and $FF;
+        (ptr+3)^ := len shr 0 and $FF;
+      end;
+      Result := 4;
+    end
+    else if len < 4294967296 then
+    begin
+      if ptr <> nil then
+      begin
+        ptr^ := $84;
+        (ptr+1)^ := len shr 24 and $FF;
+        (ptr+2)^ := len shr 16 and $FF;
+        (ptr+3)^ := len shr 8 and $FF;
+        (ptr+4)^ := len shr 0 and $FF;
+      end;
+      Result := 5;
+    end;
+  end;
+end;
+
+function simple_d2i_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
+var
+  total_len, C1xlen, C1ylen, C2len, C3len: Integer;
+  C1x, C1y, C2, C3: PByte;
+  i : Integer;
+begin
+  Result := 0;
+  if _in = nil then
+    Exit;
+  if _in^ <> $30 then
+    Exit;
+  total_len := simple_der_get_len(_in + 1, @_in);
+  C1xlen := simple_der_get_len(_in + 1, @C1x);
+  _in := C1x;
+  Inc(_in, C1xlen);
+  C1ylen := simple_der_get_len(_in + 1, @C1y);
+  _in := C1y;
+  Inc(_in, C1ylen);
+  C3len := simple_der_get_len(_in + 1, @C3);
+  _in := C3;
+  Inc(_in, C3len);
+  C2len := simple_der_get_len(_in + 1, @C2);
+  if C1x^ = $00 then
+  begin
+    Inc(C1x);
+    Dec(C1xlen);
+  end;
+  if C1y^ = $00 then
+  begin
+    Inc(C1y);
+    Dec(C1ylen);
+  end;
+  if C3^ = $00 then
+  begin
+    Inc(C3);
+    Dec(C3len);
+  end;
+  if C2^ = $00 then
+  begin
+    Inc(C2);
+    Dec(C2Len);
+  end;
+  if C1xlen <> 32 then
+    Exit;
+  if C1ylen <> 32 then
+    Exit;
+  if C3len <> 32 then
+    Exit;
+  outlen := C1xlen + C1ylen + C3len + C2len + 1;
+  _out^ := $04;                                                                 // output with head "04"
+  Inc(_out);
+  CopyMemory(_out, C1x, C1xlen);
+  CopyMemory(_out + C1xlen, C1y, C1ylen);
+  if C1C2C3 then
+  begin
+    CopyMemory(_out + C1xlen + C1ylen, C2, C2len);
+    CopyMemory(_out + C1xlen + C1ylen + C2len, C3, C3len);
+  end
+  else
+  begin
+    CopyMemory(_out + C1xlen + C1ylen, C3, C3len);
+    CopyMemory(_out + C1xlen + C1ylen + C3len, C2, C2len);
+  end;
+  Result := outlen;
+end;
+
+function simple_i2d_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
+var
+  total_len, C1xlen, C1ylen, C2len, C3len: Integer;
+  c : Integer;
+begin
+  Result := -1;
+  if _in = nil then
+    Exit;
+  if inlen <= 97 then
+    Exit;
+  C1xlen := 32;
+  C1ylen := 32;
+  C3len := 32;
+  C2len := inlen - 97;
+  if _in^ <> $04 then
+    Exit;
+  Inc(_in);                                                                     // skip head 04
+  if _in^ >= $80 then
+    Inc(C1xlen);
+  if (_in+32)^ >= $80 then
+    Inc(C1ylen);
+  total_len := C1xlen + C1ylen + C2len + C3len + 4 +
+      simple_der_gen_len(C1xlen, nil) +
+      simple_der_gen_len(C1ylen, nil) +
+      simple_der_gen_len(C2len, nil) +
+      simple_der_gen_len(C3len, nil);
+  // make up
+  _out^ := $30;
+  Inc(_out);
+  c := simple_der_gen_len(total_len, _out);
+  outlen := c + total_len + 1;
+  Result := outlen;
+  Inc(_out, c);
+  _out^ := $02;
+  Inc(_out);
+  c := simple_der_gen_len(C1xlen, _out);
+  Inc(_out, c);
+  if C1xlen > 32 then
+  begin
+    _out^ := $00;
+    Inc(_out);
+  end;
+  CopyMemory(_out, _in, 32);
+  Inc(_out, 32);
+  _out^ := $02;
+  Inc(_out);
+  c := simple_der_gen_len(C1ylen, _out);
+  Inc(_out, c);
+  if C1ylen > 32 then
+  begin
+    _out^ := $00;
+    Inc(_out);
+  end;
+  CopyMemory(_out, _in + 32, 32);
+  Inc(_out, 32);
+  if C1C2C3 then
+  begin
+    _out^ := $04;
+    Inc(_out);
+    c := simple_der_gen_len(C3len, _out);
+    Inc(_out, c);
+    CopyMemory(_out, _in+inlen-97+64, C3len);
+    Inc(_out, C3len);
+    _out^ := $04;
+    Inc(_out);
+    c := simple_der_gen_len(C2len, _out);
+    Inc(_out, c);
+    CopyMemory(_out, _in+64, C2len);
+  end
+  else
+  begin
+    _out^ := $04;
+    Inc(_out);
+    c := simple_der_gen_len(C3len, _out);
+    Inc(_out, c);
+    CopyMemory(_out, _in+64, C3len);
+    Inc(_out, C3len);
+    _out^ := $04;
+    Inc(_out);
+    c := simple_der_gen_len(C2len, _out);
+    Inc(_out, c);
+    CopyMemory(_out, _in+96, C2len);
+  end;
 end;
 
 
