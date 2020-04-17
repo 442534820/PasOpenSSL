@@ -66,6 +66,7 @@ const SupportCipherList : array [0..SupportCipherCount-1] of TSupportCipherList 
   (Alog: 'aria-192';    Mode: 'cfb8'),
   (Alog: 'aria-192';    Mode: 'ctr'),
   (Alog: 'aria-192';    Mode: 'ofb'),
+
   (Alog: 'aria-256';    Mode: 'ecb'),
   (Alog: 'aria-256';    Mode: 'cbc'),
   (Alog: 'aria-256';    Mode: 'cfb'),
@@ -80,6 +81,8 @@ const SupportCipherList : array [0..SupportCipherCount-1] of TSupportCipherList 
   (Alog: 'bf';          Mode: 'cfb'),
   (Alog: 'bf';          Mode: 'ofb')
  );
+
+
 const libcrypto = 'libcrypto-3.dll';
 
 //Crypto Base functions
@@ -112,7 +115,7 @@ function EVP_CIPHER_CTX_new: PEVP_CIPHER_CTX; stdcall; external libcrypto;
 function EVP_CipherInit_ex(ctx: PEVP_CIPHER_CTX; cipher: PEVP_CIPHER; impl: PENGINE; key: PAnsiChar; iv: PAnsiChar; enc: Integer): Integer; stdcall; external libcrypto;
 function EVP_CipherUpdate(ctx: PEVP_CIPHER_CTX; _out : PAnsiChar; var outl: Integer; _in: PAnsiChar; inl: Integer): Integer; stdcall; external libcrypto;
 function EVP_CipherFinal_ex(ctx: PEVP_CIPHER_CTX; outm: PAnsiChar; var outl: Integer): Integer; stdcall; external libcrypto;
-procedure EVP_CIPHER_CTX_fre(a: PEVP_CIPHER_CTX); stdcall; external libcrypto;
+procedure EVP_CIPHER_CTX_free(a: PEVP_CIPHER_CTX); stdcall; external libcrypto;
 function EVP_get_cipherbyname(const name: PAnsiChar): PEVP_CIPHER; stdcall; external libcrypto;
 function EVP_CIPHER_CTX_set_padding(c: PEVP_CIPHER_CTX; pad: Integer): Integer; stdcall; external libcrypto;
 //EVP Message Digest functions
@@ -152,6 +155,7 @@ function EVP_DigestInit(ctx: PEVP_MD_CTX; const _type: PEVP_MD): Integer; extern
 //
 function EVP_EncryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
 function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
+
 //EC Group functions
 function EC_GROUP_new(const meth: PEC_METHOD): PEC_GROUP; external libcrypto;
 procedure EC_pre_comp_free(group: PEC_GROUP); external libcrypto;
@@ -190,6 +194,12 @@ procedure EC_POINT_free(point: PEC_POINT); external libcrypto;
 procedure EC_POINT_clear_free(point: PEC_POINT); external libcrypto;
 function EC_POINT_copy(dst: PEC_POINT; const src: PEC_POINT): Integer; external libcrypto;
 function EC_POINT_dup(const src: PEC_POINT; const group: PEC_GROUP): PEC_POINT; external libcrypto;
+function EC_POINT_add(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_POINT_dbl(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_POINT_invert(const group: PEC_GROUP; a: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_POINT_is_at_infinity(const group: PEC_GROUP; const p: PEC_POINT): Integer; external libcrypto;
+function EC_POINT_is_on_curve(const group: PEC_GROUP; const point: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_POINT_cmp(const group: PEC_GROUP; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
 function EC_POINT_mul(const group: PEC_GROUP; r: PEC_POINT; const g_scalar: PBIGNUM; const point: PEC_POINT; const p_scaler: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
 //EC Key functions
 function EC_KEY_new: PEC_KEY; external libcrypto;
@@ -231,7 +241,6 @@ function ECDSA_SIG_set0(sig: PECDSA_SIG; r: PBIGNUM; s: PBIGNUM): Integer; exter
 function i2d_ECDSA_SIG(const sig: PECDSA_SIG; pp: PPByte): Integer; external libcrypto;
 function d2i_ECDSA_SIG(sig: PPECDSA_SIG; const pp: PPByte; len: LONG): PECDSA_SIG; external libcrypto;
 
-
 //macro functions
 function OPENSSL_malloc(num: SIZE_T):Pointer;
 function OPENSSL_zalloc(num: SIZE_T):Pointer;
@@ -265,11 +274,12 @@ function PAnsiCharToString(in_pansichar: PAnsiChar; in_len: Integer; split_str: 
 function simple_d2i_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
 function simple_i2d_SM2_Ciphertext(_in: PByte; inlen: Integer; _out: PByte; var outlen: Integer; C1C2C3: Boolean): Integer;
 
-///////////////////////////////////////
+
+////////////////////////////////////////
 
 procedure do_md(alog_name: string;
     input: PByte; output: PByte;
-    input_len: Integer; var output_len: Integer);
+   input_len: Integer; var output_len: Integer);
 procedure do_cipher(alog_name: string; do_enc: Integer; padding: Integer;
     input: PByte; output: PByte; key: PByte; iv: PByte;
     input_len: Integer; var output_len: Integer; key_len: Integer; iv_len: Integer);
@@ -278,7 +288,7 @@ function do_sm2sign(group: PEC_GROUP; evp_md: PEVP_MD;
     userid_len: Integer; msg_len: Integer; var sig_len: Integer): Boolean;
 function do_sm2verify(group: PEC_GROUP; evp_md: PEVP_MD;
     userid: PByte; pubkey: string; msg: PByte; k: PByte; sig: string;
-    userid_len: Integer; msg_len: Integer; sig_len: Integer): Boolean;    
+    userid_len: Integer; msg_len: Integer; sig_len: Integer): Boolean;
 function check_cipher(alog_name: string): Boolean;
 function get_cipher_key_size(alog_name: string): Integer;
 function get_cipher_iv_size(alog_name: string): Integer;
@@ -290,6 +300,9 @@ function set_private_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 function set_key_pare_by_hex(key: PEC_KEY; pri_key_hex_str: string; pub_key_hex_str: string = ''): Boolean;
 
 implementation
+
+
+
 
 function OPENSSL_malloc(num: SIZE_T):Pointer;
 begin
@@ -319,7 +332,7 @@ end;
 procedure OPENSSL_free(obj: Pointer);
 begin
   CRYPTO_free(obj, 'InPascal', 1);
-end;  
+end;
 
 function EVP_PKEY_CTX_set1_id(ctx: PEVP_PKEY_CTX; id: Pointer; id_len: Integer): Integer;
 begin
@@ -364,7 +377,7 @@ end;
 function EVP_VerifyUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SIZE_T): Integer;
 begin
   Result := EVP_DigestUpdate(ctx, data, count);
-  end;
+end;
 
 function EVP_OpenUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer;
 begin
@@ -374,7 +387,8 @@ end;
 function EVP_SealUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer;
 begin
   Result := EVP_EncryptUpdate(ctx, _out, outl, _in, inl);
-  end;
+end;
+
 function EVP_DigestSignUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SIZE_T): Integer;
 begin
   Result := EVP_DigestUpdate(ctx, data, count);
@@ -385,7 +399,8 @@ begin
   Result := EVP_DigestUpdate(ctx, data, count);
 end;
 
-//////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 
 procedure FreePByte(pb: PByte);
 begin
@@ -514,7 +529,7 @@ begin
     Inc(ptr);
   end;
   out_len := l;
-end;  
+end;
 
 function PByteToString(in_pbyte: PByte; in_len: Integer; split_str: string): string;
 begin
@@ -544,7 +559,6 @@ begin
   Result := Result + IntToHex(Ord(in_pansichar^), 2);
 end;
 
-
 function simple_der_get_len(ptr: PByte; pptr: PPByte): Integer;
 var
   i: Integer;
@@ -555,7 +569,11 @@ begin
   else if ptr^ = $80 then
   begin
     Exit;
+    i := 2;
+    while i <> 0 do
+    begin
                                                                                 // auto len, stop with "0000", not support now
+    end;
   end
   else
   begin
@@ -784,6 +802,7 @@ begin
 end;
 
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 procedure do_md(alog_name: string; input: PByte; output: PByte; input_len: Integer; var output_len: Integer);
 var
@@ -919,7 +938,7 @@ begin
   s_s := BN_bn2hex(sig_s);
   sig := s_r;
   sig := sig + s_s;
-  Result := True;  
+  Result := True;
 end;
 
 function check_cipher(alog_name: string): Boolean;
