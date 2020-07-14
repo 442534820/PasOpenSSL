@@ -92,24 +92,24 @@ function CRYPTO_realloc(str: Pointer; num: SIZE_T; const _file: PAnsiChar; line:
 function CRYPTO_clear_realloc(str: Pointer; old_len: SIZE_T; num: SIZE_T; const _file: PAnsiChar; line: Integer): Pointer; external libcrypto;
 procedure CRYPTO_free(str: Pointer; const _file: PAnsiChar; line: Integer); external libcrypto;
 procedure CRYPTO_clear_free(str: Pointer; num: SIZE_T; const _file: PAnsiChar; line: Integer); external libcrypto;
-function ERR_get_error: ULONG; external libcrypto;
+function ERR_get_error: ULONG; stdcall; external libcrypto;
 //BigNumber functions
-function BN_new: PBIGNUM; external libcrypto;
-procedure BN_free(a: PBIGNUM); external libcrypto;
-function BN_bn2hex(const a: PBIGNUM): PAnsiChar; external libcrypto;
-function BN_bn2dec(const a: PBIGNUM): PAnsiChar; external libcrypto;
-function BN_hex2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
-function BN_dec2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
-function BN_asc2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; external libcrypto;  //BIGNUM **bn
-function BN_bin2bn(const s: PByte; len: Integer; ret: PBIGNUM): PBIGNUM; external libcrypto;
+function BN_new: PBIGNUM; stdcall; external libcrypto;
+procedure BN_free(a: PBIGNUM); stdcall; external libcrypto;
+function BN_bn2hex(const a: PBIGNUM): PAnsiChar; stdcall; external libcrypto;
+function BN_bn2dec(const a: PBIGNUM): PAnsiChar; stdcall; external libcrypto;
+function BN_hex2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; stdcall; external libcrypto;  //BIGNUM **bn
+function BN_dec2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; stdcall; external libcrypto;  //BIGNUM **bn
+function BN_asc2bn(var bn: PBIGNUM; const a: PAnsiChar): Integer; stdcall; external libcrypto;  //BIGNUM **bn
+function BN_bin2bn(const s: PByte; len: Integer; ret: PBIGNUM): PBIGNUM; stdcall; external libcrypto;
 //EC Point functions
-function EC_POINT_point2oct(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; buf: PByte; len: SIZE_T; ctx: PBN_CTX): SIZE_T; external libcrypto;
-function EC_POINT_oct2point(const group: PEC_GROUP; point: PEC_POINT; const buf: PByte; len: SIZE_T; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_point2buf(const group: PEC_GROUP; const Pointer: PEC_POINT; form: Tpoint_conversion_form; var pbuf: PByte; ctx: PBN_CTX): SIZE_T; external libcrypto;
-function EC_POINT_point2bn(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; ret: PBIGNUM; ctx: PBN_CTX): PBIGNUM; external libcrypto;
-function EC_POINT_bn2point(const group: PEC_GROUP; const bn: PBIGNUM; point: PEC_POINT; ctx: PBN_CTX): PEC_POINT; external libcrypto;
-function EC_POINT_point2hex(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; ctx: PBN_CTX): PAnsiChar; external libcrypto;
-function EC_POINT_hex2point(const group: PEC_GROUP; const buf: PAnsiChar; point: PEC_POINT; ctx: PBN_CTX): PEC_POINT; external libcrypto;
+function EC_POINT_point2oct(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; buf: PByte; len: SIZE_T; ctx: PBN_CTX): SIZE_T; stdcall; external libcrypto;
+function EC_POINT_oct2point(const group: PEC_GROUP; point: PEC_POINT; const buf: PByte; len: SIZE_T; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_point2buf(const group: PEC_GROUP; const Pointer: PEC_POINT; form: Tpoint_conversion_form; var pbuf: PByte; ctx: PBN_CTX): SIZE_T; stdcall; external libcrypto;
+function EC_POINT_point2bn(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; ret: PBIGNUM; ctx: PBN_CTX): PBIGNUM; stdcall; external libcrypto;
+function EC_POINT_bn2point(const group: PEC_GROUP; const bn: PBIGNUM; point: PEC_POINT; ctx: PBN_CTX): PEC_POINT; stdcall; external libcrypto;
+function EC_POINT_point2hex(const group: PEC_GROUP; const point: PEC_POINT; form: Tpoint_conversion_form; ctx: PBN_CTX): PAnsiChar; stdcall; external libcrypto;
+function EC_POINT_hex2point(const group: PEC_GROUP; const buf: PAnsiChar; point: PEC_POINT; ctx: PBN_CTX): PEC_POINT; stdcall; external libcrypto;
 //EVP Cipher functions
 function EVP_CIPHER_CTX_new: PEVP_CIPHER_CTX; stdcall; external libcrypto;
 function EVP_CipherInit_ex(ctx: PEVP_CIPHER_CTX; cipher: PEVP_CIPHER; impl: PENGINE; key: PAnsiChar; iv: PAnsiChar; enc: Integer): Integer; stdcall; external libcrypto;
@@ -120,126 +120,126 @@ function EVP_get_cipherbyname(const name: PAnsiChar): PEVP_CIPHER; stdcall; exte
 function EVP_CIPHER_CTX_set_padding(c: PEVP_CIPHER_CTX; pad: Integer): Integer; stdcall; external libcrypto;
 //EVP Message Digest functions
 function EVP_MD_CTX_new:PEVP_MD_CTX; stdcall; external libcrypto;
-procedure EVP_MD_CTX_set_pkey_ctx(ctx: PEVP_MD_CTX; pctx: PEVP_PKEY_CTX); external libcrypto;
+procedure EVP_MD_CTX_set_pkey_ctx(ctx: PEVP_MD_CTX; pctx: PEVP_PKEY_CTX); stdcall; external libcrypto;
 function EVP_DigestInit_ex(ctx: PEVP_MD_CTX; const AType: PEVP_MD; impl: PENGINE): Integer; stdcall; external libcrypto;
-function EVP_DigestUpdate(ctx: PEVP_MD_CTX; d: Pointer; cnt: SIZE_T): Integer; external libcrypto;
-function EVP_DigestFinal(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; external libcrypto;
-function EVP_DigestFinal_ex(ctx: PEVP_MD_CTX; md: PAnsiChar; var s: UINT): Integer; external libcrypto;
-procedure EVP_MD_CTX_free(ctx: PEVP_MD_CTX); external libcrypto;
-function EVP_get_digestbyname(const name: PAnsiChar): PEVP_MD; external libcrypto;
+function EVP_DigestUpdate(ctx: PEVP_MD_CTX; d: Pointer; cnt: SIZE_T): Integer; stdcall; external libcrypto;
+function EVP_DigestFinal(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; stdcall; external libcrypto;
+function EVP_DigestFinal_ex(ctx: PEVP_MD_CTX; md: PAnsiChar; var s: UINT): Integer; stdcall; external libcrypto;
+procedure EVP_MD_CTX_free(ctx: PEVP_MD_CTX); stdcall; external libcrypto;
+function EVP_get_digestbyname(const name: PAnsiChar): PEVP_MD; stdcall; external libcrypto;
 //EVP PKEY functions
-function EVP_PKEY_new: PEVP_PKEY; external libcrypto;
-function EVP_PKEY_new_raw_public_key(_type: Integer; e: PENGINE; const public: PByte; len: SIZE_T): PEVP_PKEY; external libcrypto;
-function EVP_PKEY_assign(pkey: PEVP_PKEY; _type: Integer; key: Pointer): Integer; external libcrypto;
-function EVP_PKEY_CTX_new(pkey: PEVP_PKEY; e: PENGINE): PEVP_PKEY_CTX; external libcrypto;
-procedure EVP_PKEY_CTX_free(ctx: PEVP_PKEY_CTX); external libcrypto;
-function EVP_PKEY_CTX_ctrl(ctx: PEVP_PKEY_CTX; keytype: Integer; optype: Integer; cmd: Integer; p1: Integer; p2: Pointer): Integer; external libcrypto;
-function EVP_PKEY_set_type(pkey: PEVP_PKEY; _type: Integer): Integer; external libcrypto;
-function EVP_PKEY_set_alias_type(pkey: PEVP_PKEY; _type: Integer): Integer; external libcrypto;
-function EVP_PKEY_encrypt_init(ctx: PEVP_PKEY_CTX): Integer; external libcrypto;
-function EVP_PKEY_encrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; external libcrypto;
-function EVP_PKEY_decrypt_init(ctx: PEVP_PKEY_CTX): Integer; external libcrypto;
-function EVP_PKEY_decrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; external libcrypto;
+function EVP_PKEY_new: PEVP_PKEY; stdcall; external libcrypto;
+function EVP_PKEY_new_raw_public_key(_type: Integer; e: PENGINE; const public: PByte; len: SIZE_T): PEVP_PKEY; stdcall; external libcrypto;
+function EVP_PKEY_assign(pkey: PEVP_PKEY; _type: Integer; key: Pointer): Integer; stdcall; external libcrypto;
+function EVP_PKEY_CTX_new(pkey: PEVP_PKEY; e: PENGINE): PEVP_PKEY_CTX; stdcall; external libcrypto;
+procedure EVP_PKEY_CTX_free(ctx: PEVP_PKEY_CTX); stdcall; external libcrypto;
+function EVP_PKEY_CTX_ctrl(ctx: PEVP_PKEY_CTX; keytype: Integer; optype: Integer; cmd: Integer; p1: Integer; p2: Pointer): Integer; stdcall; external libcrypto;
+function EVP_PKEY_set_type(pkey: PEVP_PKEY; _type: Integer): Integer; stdcall; external libcrypto;
+function EVP_PKEY_set_alias_type(pkey: PEVP_PKEY; _type: Integer): Integer; stdcall; external libcrypto;
+function EVP_PKEY_encrypt_init(ctx: PEVP_PKEY_CTX): Integer; stdcall; external libcrypto;
+function EVP_PKEY_encrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; stdcall; external libcrypto;
+function EVP_PKEY_decrypt_init(ctx: PEVP_PKEY_CTX): Integer; stdcall; external libcrypto;
+function EVP_PKEY_decrypt(ctx: PEVP_PKEY_CTX; out: PByte; var outlen: SIZE_T; const _in: PByte; inlen: SIZE_T): Integer; stdcall; external libcrypto;
 //EVP m_sigver.c
-function EVP_DigestSignInit(ctx: PEVP_MD_CTX; PCTX: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; external libcrypto;
-function EVP_DigestVerifyInit(ctx: PEVP_MD_CTX; pctx: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; external libcrypto;
-function EVP_DigestSignFinal(ctx: PEVP_MD_CTX; sigret: PByte; siglen: PSIZE_T): Integer; external libcrypto;
-function EVP_DigestSign(ctx: PEVP_MD_CTX; sigret: PByte; siglen: PSIZE_T; const tbs: PByte; tbslen: SIZE_T): Integer; external libcrypto;
-function EVP_DigestVerifyFinal(ctx: PEVP_MD_CTX; const sig: PByte; siglen: SIZE_T): Integer; external libcrypto;
-function EVP_DigestVerify(ctx: PEVP_MD_CTX; const sigret: PByte; siglen: SIZE_T; const tbs: PByte; tbslen: SIZE_T): Integer; external libcrypto;
-function EVP_DigestInit(ctx: PEVP_MD_CTX; const _type: PEVP_MD): Integer; external libcrypto;
-//function EVP_DigestInit_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer; external libcrypto;
-//function EVP_DigestUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SIZE_T): Integer; external libcrypto;
-//function EVP_DigestFinal(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; external libcrypto;
-//function EVP_DigestFinal_ex(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; external libcrypto;
+function EVP_DigestSignInit(ctx: PEVP_MD_CTX; PCTX: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; stdcall; external libcrypto;
+function EVP_DigestVerifyInit(ctx: PEVP_MD_CTX; pctx: PPEVP_PKEY_CTX; const _type: PEVP_MD; e: PENGINE; pkey: PEVP_PKEY): Integer; stdcall; external libcrypto;
+function EVP_DigestSignFinal(ctx: PEVP_MD_CTX; sigret: PByte; siglen: PSIZE_T): Integer; stdcall; external libcrypto;
+function EVP_DigestSign(ctx: PEVP_MD_CTX; sigret: PByte; siglen: PSIZE_T; const tbs: PByte; tbslen: SIZE_T): Integer; stdcall; external libcrypto;
+function EVP_DigestVerifyFinal(ctx: PEVP_MD_CTX; const sig: PByte; siglen: SIZE_T): Integer; stdcall; external libcrypto;
+function EVP_DigestVerify(ctx: PEVP_MD_CTX; const sigret: PByte; siglen: SIZE_T; const tbs: PByte; tbslen: SIZE_T): Integer; stdcall; external libcrypto;
+function EVP_DigestInit(ctx: PEVP_MD_CTX; const _type: PEVP_MD): Integer; stdcall; external libcrypto;
+//function EVP_DigestInit_ex(ctx: PEVP_MD_CTX; const _type: PEVP_MD; impl: PENGINE): Integer; stdcall; external libcrypto;
+//function EVP_DigestUpdate(ctx: PEVP_MD_CTX; const data: Pointer; count: SIZE_T): Integer; stdcall; external libcrypto;
+//function EVP_DigestFinal(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; stdcall; external libcrypto;
+//function EVP_DigestFinal_ex(ctx: PEVP_MD_CTX; md: PByte; size: PUINT): Integer; stdcall; external libcrypto;
 //
-function EVP_EncryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
-function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; external libcrypto;
+function EVP_EncryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; stdcall; external libcrypto;
+function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; _out: PByte; outl: PINT; const _in: PByte; inl: Integer): Integer; stdcall; external libcrypto;
 
 //EC Group functions
-function EC_GROUP_new(const meth: PEC_METHOD): PEC_GROUP; external libcrypto;
-procedure EC_pre_comp_free(group: PEC_GROUP); external libcrypto;
-procedure EC_GROUP_free(group: PEC_GROUP); external libcrypto;
-procedure EC_GROUP_clear_free(group: PEC_GROUP); external libcrypto;
-function EC_GROUP_copy(dest: PEC_GROUP; const src: PEC_GROUP): Integer; external libcrypto;
-function EC_GROUP_dup(const a: PEC_GROUP): PEC_GROUP; external libcrypto;
-function EC_GROUP_method_of(const group: PEC_GROUP): PEC_METHOD; external libcrypto;   //const return value
-function EC_METHOD_get_field_type(const meth: PEC_METHOD): Integer; external libcrypto;
-function EC_GROUP_set_generator(group: PEC_GROUP; const generator: PEC_POINT; const order: PBIGNUM; const cofactor: PBIGNUM): Integer; external libcrypto;
-function EC_GROUP_get0_generator(const group: PEC_GROUP): PEC_POINT; external libcrypto;   //const return value
-function EC_GROUP_get_mont_data(const group: PEC_GROUP): PBN_MONT_CTX; external libcrypto;
-function EC_GROUP_get_order(const group: PEC_GROUP; order: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_GROUP_get0_order(const group: PEC_GROUP): PBIGNUM; external libcrypto;   //const return value
-function EC_GROUP_order_bits(const group: PEC_GROUP): Integer; external libcrypto;
-function EC_GROUP_get_cofactor(const group: PEC_GROUP; cofactor: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_GROUP_get0_cofactor(const group: PEC_GROUP): PBIGNUM; external libcrypto;    //const return value
-procedure EC_GROUP_set_curve_name(group: PEC_GROUP; nid: Integer); external libcrypto;
-function EC_GROUP_get_curve_name(const group: PEC_GROUP): Integer; external libcrypto;
-procedure EC_GROUP_set_asn1_flag(group: PEC_GROUP; flag: Integer); external libcrypto;
-function EC_GROUP_get_asn1_flag(const group: PEC_GROUP): Integer; external libcrypto;
-procedure EC_GROUP_set_point_conversion_form(group: PEC_GROUP; form: Tpoint_conversion_form); external libcrypto;
-function EC_GROUP_get_point_conversion_form(const group: PEC_GROUP): Tpoint_conversion_form; external libcrypto;
-function EC_GROUP_new_by_curve_name(nid: Integer): PEC_GROUP; external libcrypto;
-function EC_GROUP_set_seed(group: PEC_GROUP; const p: PByte; len: SIZE_T): SIZE_T; external libcrypto;
-function EC_GROUP_get0_seed(const group: PEC_GROUP): PByte; external libcrypto;
-function EC_GROUP_get_seed_len(const group: PEC_GROUP): SIZE_T; external libcrypto;
-function EC_GROUP_set_curve(group: PEC_GROUP; const p: PBIGNUM; const a: PBIGNUM; const b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_GROUP_get_curve(const group: PEC_GROUP; p: PBIGNUM; a: PBIGNUM; b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_GROUP_get_degree(const group: PEC_GROUP): Integer; external libcrypto;
-function EC_GROUP_check_discriminant(const group: PEC_GROUP; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_GROUP_cmp(const a: PEC_GROUP; const b: PEC_GROUP; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_new(const meth: PEC_METHOD): PEC_GROUP; stdcall; external libcrypto;
+procedure EC_pre_comp_free(group: PEC_GROUP); stdcall; external libcrypto;
+procedure EC_GROUP_free(group: PEC_GROUP); stdcall; external libcrypto;
+procedure EC_GROUP_clear_free(group: PEC_GROUP); stdcall; external libcrypto;
+function EC_GROUP_copy(dest: PEC_GROUP; const src: PEC_GROUP): Integer; stdcall; external libcrypto;
+function EC_GROUP_dup(const a: PEC_GROUP): PEC_GROUP; stdcall; external libcrypto;
+function EC_GROUP_method_of(const group: PEC_GROUP): PEC_METHOD; stdcall; external libcrypto;   //const return value
+function EC_METHOD_get_field_type(const meth: PEC_METHOD): Integer; stdcall; external libcrypto;
+function EC_GROUP_set_generator(group: PEC_GROUP; const generator: PEC_POINT; const order: PBIGNUM; const cofactor: PBIGNUM): Integer; stdcall; external libcrypto;
+function EC_GROUP_get0_generator(const group: PEC_GROUP): PEC_POINT; stdcall; external libcrypto;   //const return value
+function EC_GROUP_get_mont_data(const group: PEC_GROUP): PBN_MONT_CTX; stdcall; external libcrypto;
+function EC_GROUP_get_order(const group: PEC_GROUP; order: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_get0_order(const group: PEC_GROUP): PBIGNUM; stdcall; external libcrypto;   //const return value
+function EC_GROUP_order_bits(const group: PEC_GROUP): Integer; stdcall; external libcrypto;
+function EC_GROUP_get_cofactor(const group: PEC_GROUP; cofactor: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_get0_cofactor(const group: PEC_GROUP): PBIGNUM; stdcall; external libcrypto;    //const return value
+procedure EC_GROUP_set_curve_name(group: PEC_GROUP; nid: Integer); stdcall; external libcrypto;
+function EC_GROUP_get_curve_name(const group: PEC_GROUP): Integer; stdcall; external libcrypto;
+procedure EC_GROUP_set_asn1_flag(group: PEC_GROUP; flag: Integer); stdcall; external libcrypto;
+function EC_GROUP_get_asn1_flag(const group: PEC_GROUP): Integer; stdcall; external libcrypto;
+procedure EC_GROUP_set_point_conversion_form(group: PEC_GROUP; form: Tpoint_conversion_form); stdcall; external libcrypto;
+function EC_GROUP_get_point_conversion_form(const group: PEC_GROUP): Tpoint_conversion_form; stdcall; external libcrypto;
+function EC_GROUP_new_by_curve_name(nid: Integer): PEC_GROUP; stdcall; external libcrypto;
+function EC_GROUP_set_seed(group: PEC_GROUP; const p: PByte; len: SIZE_T): SIZE_T; stdcall; external libcrypto;
+function EC_GROUP_get0_seed(const group: PEC_GROUP): PByte; stdcall; external libcrypto;
+function EC_GROUP_get_seed_len(const group: PEC_GROUP): SIZE_T; stdcall; external libcrypto;
+function EC_GROUP_set_curve(group: PEC_GROUP; const p: PBIGNUM; const a: PBIGNUM; const b: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_get_curve(const group: PEC_GROUP; p: PBIGNUM; a: PBIGNUM; b: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_get_degree(const group: PEC_GROUP): Integer; stdcall; external libcrypto;
+function EC_GROUP_check_discriminant(const group: PEC_GROUP; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_cmp(const a: PEC_GROUP; const b: PEC_GROUP; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 //EC Point functions
-function EC_POINT_new(const group: PEC_GROUP): PEC_POINT; external libcrypto;
-procedure EC_POINT_free(point: PEC_POINT); external libcrypto;
-procedure EC_POINT_clear_free(point: PEC_POINT); external libcrypto;
-function EC_POINT_copy(dst: PEC_POINT; const src: PEC_POINT): Integer; external libcrypto;
-function EC_POINT_dup(const src: PEC_POINT; const group: PEC_GROUP): PEC_POINT; external libcrypto;
-function EC_POINT_add(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_dbl(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_invert(const group: PEC_GROUP; a: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_is_at_infinity(const group: PEC_GROUP; const p: PEC_POINT): Integer; external libcrypto;
-function EC_POINT_is_on_curve(const group: PEC_GROUP; const point: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_cmp(const group: PEC_GROUP; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_POINT_mul(const group: PEC_GROUP; r: PEC_POINT; const g_scalar: PBIGNUM; const point: PEC_POINT; const p_scaler: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_POINT_new(const group: PEC_GROUP): PEC_POINT; stdcall; external libcrypto;
+procedure EC_POINT_free(point: PEC_POINT); stdcall; external libcrypto;
+procedure EC_POINT_clear_free(point: PEC_POINT); stdcall; external libcrypto;
+function EC_POINT_copy(dst: PEC_POINT; const src: PEC_POINT): Integer; stdcall; external libcrypto;
+function EC_POINT_dup(const src: PEC_POINT; const group: PEC_GROUP): PEC_POINT; stdcall; external libcrypto;
+function EC_POINT_add(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_dbl(const group: PEC_GROUP; r: PEC_POINT; const a: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_invert(const group: PEC_GROUP; a: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_is_at_infinity(const group: PEC_GROUP; const p: PEC_POINT): Integer; stdcall; external libcrypto;
+function EC_POINT_is_on_curve(const group: PEC_GROUP; const point: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_cmp(const group: PEC_GROUP; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_mul(const group: PEC_GROUP; r: PEC_POINT; const g_scalar: PBIGNUM; const point: PEC_POINT; const p_scaler: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 //EC Key functions
-function EC_KEY_new: PEC_KEY; external libcrypto;
-function EC_KEY_new_by_curve_name(nid: Integer): PEC_KEY; external libcrypto;
-procedure EC_KEY_free(r: PEC_KEY); external libcrypto;
-function EC_KEY_copy(dest: PEC_KEY; const src: PEC_KEY): PEC_KEY; external libcrypto;
-function EC_KEY_dup(const ec_key: PEC_KEY): PEC_KEY; external libcrypto;
-function EC_KEY_up_ref(r: PEC_KEY): Integer; external libcrypto;
-function EC_KEY_get0_engine(const eckey: PEC_KEY): PENGINE; external libcrypto;
-function EC_KEY_generate_key(eckey: PEC_KEY): Integer; external libcrypto;
-function ec_key_simple_generate_key(eckey: PEC_KEY): Integer; external libcrypto;
-function ec_key_simple_generate_public_key(eckey:PEC_KEY): Integer; external libcrypto;
-function EC_KEY_check_key(const eckey: PEC_KEY): Integer; external libcrypto;
-function ec_key_simple_check_key(const eckey: PEC_KEY): Integer; external libcrypto;
-function EC_KEY_set_public_key_affine_coordinates(key: PEC_KEY; x: PBIGNUM; y: PBIGNUM): Integer; external libcrypto;
-function EC_KEY_get0_group(const key: PEC_KEY): PEC_GROUP; external libcrypto;   //return const
-function EC_KEY_set_group(key: PEC_KEY; const group: PEC_GROUP): Integer; external libcrypto;
-function EC_KEY_get0_private_key(const key: PEC_KEY): PBIGNUM; external libcrypto;
-function EC_KEY_set_private_key(key: PEC_KEY; const priv_key: PBIGNUM): Integer; external libcrypto;
-function EC_KEY_get0_public_key(const key: PEC_KEY): PEC_POINT; external libcrypto;
-function EC_KEY_set_public_key(key: PEC_KEY; const pub_key: PEC_POINT): Integer; external libcrypto;
-function EC_KEY_get_enc_flags(const key: PEC_KEY): UINT; external libcrypto;
-procedure EC_KEY_set_enc_flags(key: PEC_KEY; flags: UINT); external libcrypto;
-function EC_KEY_get_conv_form(const key: PEC_KEY): Tpoint_conversion_form; external libcrypto;
-procedure EC_KEY_set_conv_form(key: PEC_KEY; cform: Tpoint_conversion_form); external libcrypto;
-procedure EC_KEY_set_asn1_flag(key: PEC_KEY; flag: Integer); external libcrypto;
-function EC_KEY_precompute_mult(key: PEC_KEY; ctx: PBN_CTX): Integer; external libcrypto;
-function EC_KEY_get_flags(const key: PEC_KEY): Integer; external libcrypto;
-procedure EC_KEY_set_flags(key: PEC_KEY; flags: Integer); external libcrypto;
-procedure EC_KEY_clear_flags(key: PEC_KEY; flags: Integer); external libcrypto;
+function EC_KEY_new: PEC_KEY; stdcall; external libcrypto;
+function EC_KEY_new_by_curve_name(nid: Integer): PEC_KEY; stdcall; external libcrypto;
+procedure EC_KEY_free(r: PEC_KEY); stdcall; external libcrypto;
+function EC_KEY_copy(dest: PEC_KEY; const src: PEC_KEY): PEC_KEY; stdcall; external libcrypto;
+function EC_KEY_dup(const ec_key: PEC_KEY): PEC_KEY; stdcall; external libcrypto;
+function EC_KEY_up_ref(r: PEC_KEY): Integer; stdcall; external libcrypto;
+function EC_KEY_get0_engine(const eckey: PEC_KEY): PENGINE; stdcall; external libcrypto;
+function EC_KEY_generate_key(eckey: PEC_KEY): Integer; stdcall; external libcrypto;
+function ec_key_simple_generate_key(eckey: PEC_KEY): Integer; stdcall; external libcrypto;
+function ec_key_simple_generate_public_key(eckey:PEC_KEY): Integer; stdcall; external libcrypto;
+function EC_KEY_check_key(const eckey: PEC_KEY): Integer; stdcall; external libcrypto;
+function ec_key_simple_check_key(const eckey: PEC_KEY): Integer; stdcall; external libcrypto;
+function EC_KEY_set_public_key_affine_coordinates(key: PEC_KEY; x: PBIGNUM; y: PBIGNUM): Integer; stdcall; external libcrypto;
+function EC_KEY_get0_group(const key: PEC_KEY): PEC_GROUP; stdcall; external libcrypto;   //return const
+function EC_KEY_set_group(key: PEC_KEY; const group: PEC_GROUP): Integer; stdcall; external libcrypto;
+function EC_KEY_get0_private_key(const key: PEC_KEY): PBIGNUM; stdcall; external libcrypto;
+function EC_KEY_set_private_key(key: PEC_KEY; const priv_key: PBIGNUM): Integer; stdcall; external libcrypto;
+function EC_KEY_get0_public_key(const key: PEC_KEY): PEC_POINT; stdcall; external libcrypto;
+function EC_KEY_set_public_key(key: PEC_KEY; const pub_key: PEC_POINT): Integer; stdcall; external libcrypto;
+function EC_KEY_get_enc_flags(const key: PEC_KEY): UINT; stdcall; external libcrypto;
+procedure EC_KEY_set_enc_flags(key: PEC_KEY; flags: UINT); stdcall; external libcrypto;
+function EC_KEY_get_conv_form(const key: PEC_KEY): Tpoint_conversion_form; stdcall; external libcrypto;
+procedure EC_KEY_set_conv_form(key: PEC_KEY; cform: Tpoint_conversion_form); stdcall; external libcrypto;
+procedure EC_KEY_set_asn1_flag(key: PEC_KEY; flag: Integer); stdcall; external libcrypto;
+function EC_KEY_precompute_mult(key: PEC_KEY; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_KEY_get_flags(const key: PEC_KEY): Integer; stdcall; external libcrypto;
+procedure EC_KEY_set_flags(key: PEC_KEY; flags: Integer); stdcall; external libcrypto;
+procedure EC_KEY_clear_flags(key: PEC_KEY; flags: Integer); stdcall; external libcrypto;
 //ECDSA functions
-function ECDSA_SIG_new: PECDSA_SIG; external libcrypto;
-procedure ECDSA_SIG_free(sig: PECDSA_SIG); external libcrypto;
-procedure ECDSA_SIG_get0(const sig: PECDSA_SIG; const pr: PPBIGNUM; const ps: PPBIGNUM); external libcrypto;
-function ECDSA_SIG_get0_r(const sig: PECDSA_SIG): PBIGNUM; external libcrypto;   //const return value
-function ECDSA_SIG_get0_s(const sig: PECDSA_SIG): PBIGNUM; external libcrypto;   //const return value
-function ECDSA_SIG_set0(sig: PECDSA_SIG; r: PBIGNUM; s: PBIGNUM): Integer; external libcrypto;
+function ECDSA_SIG_new: PECDSA_SIG; stdcall; external libcrypto;
+procedure ECDSA_SIG_free(sig: PECDSA_SIG); stdcall; external libcrypto;
+procedure ECDSA_SIG_get0(const sig: PECDSA_SIG; const pr: PPBIGNUM; const ps: PPBIGNUM); stdcall; external libcrypto;
+function ECDSA_SIG_get0_r(const sig: PECDSA_SIG): PBIGNUM; stdcall; external libcrypto;   //const return value
+function ECDSA_SIG_get0_s(const sig: PECDSA_SIG): PBIGNUM; stdcall; external libcrypto;   //const return value
+function ECDSA_SIG_set0(sig: PECDSA_SIG; r: PBIGNUM; s: PBIGNUM): Integer; stdcall; external libcrypto;
 //der functions
-function i2d_ECDSA_SIG(const sig: PECDSA_SIG; pp: PPByte): Integer; external libcrypto;
-function d2i_ECDSA_SIG(sig: PPECDSA_SIG; const pp: PPByte; len: LONG): PECDSA_SIG; external libcrypto;
+function i2d_ECDSA_SIG(const sig: PECDSA_SIG; pp: PPByte): Integer; stdcall; external libcrypto;
+function d2i_ECDSA_SIG(sig: PPECDSA_SIG; const pp: PPByte; len: LONG): PECDSA_SIG; stdcall; external libcrypto;
 
 //macro functions
 function OPENSSL_malloc(num: SIZE_T):Pointer;
