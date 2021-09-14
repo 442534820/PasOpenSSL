@@ -188,6 +188,9 @@ function EC_GROUP_get_curve(const group: PEC_GROUP; p: PBIGNUM; a: PBIGNUM; b: P
 function EC_GROUP_get_degree(const group: PEC_GROUP): Integer; stdcall; external libcrypto;
 function EC_GROUP_check_discriminant(const group: PEC_GROUP; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 function EC_GROUP_cmp(const a: PEC_GROUP; const b: PEC_GROUP; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_GROUP_new_curve_GFp(const p: PBIGNUM; const a: PBIGNUM; const b: PBIGNUM; ctx: PBN_CTX): PEC_GROUP; stdcall; external libcrypto;
+function EC_GROUP_set_curve_GFp(group: PEC_GROUP; const p: PBIGNUM; const a: PBIGNUM; const b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
+function EC_GROUP_get_curve_GFp(const group: PEC_GROUP; p: PBIGNUM; a: PBIGNUM; b: PBIGNUM; ctx: PBN_CTX): Integer; external libcrypto;
 //EC Point functions
 function EC_POINT_new(const group: PEC_GROUP): PEC_POINT; stdcall; external libcrypto;
 procedure EC_POINT_free(point: PEC_POINT); stdcall; external libcrypto;
@@ -201,6 +204,10 @@ function EC_POINT_is_at_infinity(const group: PEC_GROUP; const p: PEC_POINT): In
 function EC_POINT_is_on_curve(const group: PEC_GROUP; const point: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 function EC_POINT_cmp(const group: PEC_GROUP; const a: PEC_POINT; const b: PEC_POINT; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 function EC_POINT_mul(const group: PEC_GROUP; r: PEC_POINT; const g_scalar: PBIGNUM; const point: PEC_POINT; const p_scaler: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_get_Jprojective_corrdinates_GFp(const group: PEC_GROUP; const p: PEC_POINT; x: PBIGNUM; y: PBIGNUM; z: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_set_affine_coordinates_GFp(const group: PEC_GROUP; p: PEC_POINT; const x: PBIGNUM; const y: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_get_affine_coordinates_GFp(const group: PEC_GROUP; const p: PEC_POINT; x: PBIGNUM; y: PBIGNUM; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
+function EC_POINT_set_compressed_coordinates_GFp(const group: PEC_GROUP; p: PEC_POINT; const x: PBIGNUM; y_bit: Integer; ctx: PBN_CTX): Integer; stdcall; external libcrypto;
 //EC Key functions
 function EC_KEY_new: PEC_KEY; stdcall; external libcrypto;
 function EC_KEY_new_by_curve_name(nid: Integer): PEC_KEY; stdcall; external libcrypto;
@@ -298,6 +305,9 @@ function get_cipher_all_size(alog_name: string; var key_size: Integer; var iv_si
 function set_public_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 function set_private_key_by_hex(key: PEC_KEY; key_hex_str: string): Boolean;
 function set_key_pare_by_hex(key: PEC_KEY; pri_key_hex_str: string; pub_key_hex_str: string = ''): Boolean;
+
+function create_EC_group(p_hex: string; a_hex: string; b_hex: string;
+    x_hex: string; y_hex: string; order_hex: string; cof_hex: string): PEC_GROUP;
 
 implementation
 
@@ -1060,6 +1070,57 @@ begin
   Result := True;
 end;
 
-
+function create_EC_group(p_hex: string; a_hex: string; b_hex: string;
+    x_hex: string; y_hex: string; order_hex: string; cof_hex: string): PEC_GROUP;
+var
+  p, a, b, g_x, g_y, order, cof : PBIGNUM;
+  generator : PEC_POINT;
+  group : PEC_GROUP;
+  ok : Boolean;
+  ret : Integer;
+label
+  done;
+begin
+  ok := False;
+  Result := nil;
+  p := BN_new;
+  a := BN_new;
+  b := BN_new;
+  g_x := BN_new;
+  g_y := BN_new;
+  order := BN_new;
+  cof := BN_new;
+  ret := BN_hex2bn(p, PAnsiChar(AnsiString(p_hex)));
+  ret := BN_hex2bn(a, PAnsiChar(AnsiString(a_hex)));
+  ret := BN_hex2bn(b, PAnsiChar(AnsiString(b_hex)));
+  group := EC_GROUP_new_curve_GFp(p, a, b, nil);
+  if group = nil then
+    goto done;
+  generator := EC_POINT_new(group);
+  if generator = nil then
+    goto done;
+  ret := BN_hex2bn(g_x, PAnsiChar(AnsiString(x_hex)));
+  ret := BN_hex2bn(g_y, PAnsiChar(AnsiString(y_hex)));
+  ret := EC_POINT_set_affine_coordinates_GFp(group, generator, g_x, g_y, nil);
+  ret := BN_hex2bn(order, PAnsiChar(AnsiString(order_hex)));
+  ret := BN_hex2bn(cof, PAnsiChar(AnsiString(cof_hex)));
+  ret := EC_GROUP_set_generator(group, generator, order, cof);
+  ok := True;
+done:
+  BN_free(p);
+  BN_free(a);
+  BN_free(b);
+  BN_free(g_x);
+  BN_free(g_y);
+  EC_POINT_free(generator);
+  BN_free(order);
+  BN_free(cof);
+  if not ok then
+  begin
+    EC_GROUP_free(group);
+    group := nil;
+  end;
+  Result := group;
+end;
 
 end.
